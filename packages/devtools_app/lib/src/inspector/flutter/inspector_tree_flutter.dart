@@ -164,14 +164,70 @@ class InspectorRowContent extends StatelessWidget {
                   },
                   child: Container(
                     height: rowHeight,
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    padding: const EdgeInsets.only(left: 4.0),
                     child: DiagnosticsNodeDescription(node.diagnostic),
                   ),
                 ),
-              )
+              ),
+              node.diagnostic?.isFlex == true ? Container(
+                margin: const EdgeInsets.only(left: 4.0),
+                child: InkWell(
+                  child: Icon(Icons.info, size: 16.0),
+                  onTap: () {
+                    showDialog(
+                      context: context, child: StoryOfYourFlexWidget(node));
+                  },
+                ),
+              ) : const SizedBox(),
+              controller._showConstraints
+                ? ConstraintsDescriptor(node: node)
+                : const SizedBox(),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class ConstraintsDescriptor extends StatelessWidget {
+  final InspectorTreeNode node;
+
+  const ConstraintsDescriptor({this.node, Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Text(
+        '// constraints: ...',
+        style: TextStyle(
+          color: Colors.green,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    );
+  }
+}
+
+
+class StoryOfYourFlexWidget extends StatelessWidget {
+  const StoryOfYourFlexWidget(InspectorTreeNode node, {
+    Key key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Column(
+        children: const [
+          Text('Story of Flex Layout page'),
+          Expanded(
+            child: Center(
+              child: Text('TODO'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -280,6 +336,16 @@ class InspectorTreeControllerFlutter extends Object
       _maxIndent = maxIndent;
     }
     return _maxIndent;
+  }
+
+  bool _showConstraints = false;
+
+  bool get showConstraints => _showConstraints;
+
+  void toggleShowConstraints() {
+    setState(() {
+      _showConstraints = !_showConstraints;
+    });
   }
 }
 

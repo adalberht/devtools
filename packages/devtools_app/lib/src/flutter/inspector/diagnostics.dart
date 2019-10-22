@@ -4,6 +4,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Icon;
+import 'package:flutter/material.dart';
 
 import '../../inspector/diagnostics_node.dart';
 import '../../inspector/inspector_controller.dart';

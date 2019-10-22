@@ -94,6 +94,9 @@ class RemoteDiagnosticsNode extends DiagnosticableTree {
 
   final bool isProperty;
 
+  // TODO(albertusangga) :
+  bool get isFlex => ['Row', 'Column', 'Flexible'].contains(widget?.name);
+
   @override
   bool operator ==(dynamic other) {
     if (other is! RemoteDiagnosticsNode) return false;

@@ -138,6 +138,10 @@ class _ServiceExtensionButtonGroupState
 List<Widget> getServiceExtensionWidgets() {
   return [
     ServiceExtensionButtonGroup(
+      minIncludeLabelWidth: 250,
+      extensions: [],
+    ),
+    ServiceExtensionButtonGroup(
       minIncludeLabelWidth: 1200,
       extensions: [performanceOverlay, slowAnimations],
     ),

@@ -102,7 +102,13 @@ class _InspectorScreenBodyState extends State<InspectorScreenBody>
               child: Label(FlutterIcons.refresh, 'Refresh Tree'),
               onPressed: _refreshInspector,
             ),
-            const Spacer(),
+            Container(
+              margin: const EdgeInsets.only(left: 8.0),
+              child: OutlineButton(
+                child: Label(FlutterIcons.lightbulb, 'Constraints'),
+                onPressed: summaryTreeController.toggleShowConstraints,
+              ),
+            ),
             ...getServiceExtensionWidgets(),
           ],
         ),
