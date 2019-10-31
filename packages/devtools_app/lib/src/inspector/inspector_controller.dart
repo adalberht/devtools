@@ -114,7 +114,7 @@ class InspectorController implements InspectorServiceClient {
   }
 
   // TODO(albertusangga): Remove this flag if required CL to Flutter is landed
-  static bool enableExperimentalStoryOfLayout = false;
+  static bool enableExperimentalStoryOfLayout = true;
 
   final List<Function> _selectionListeners = [];
 
