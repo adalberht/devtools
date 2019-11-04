@@ -4,7 +4,6 @@
 
 import 'dart:math';
 
-import 'package:devtools_app/src/ui/fake_flutter/_real_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -179,11 +178,43 @@ class StoryOfYourFlexWidget extends StatelessWidget {
     return Center(
       child: GridAddOns(
         child: child,
-        left: BidirectionalVerticalArrowWrapper(
-          child: Text(
-            properties.verticalDirectionDescription,
+        top: Container(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          child: BidirectionalHorizontalArrowWrapper(
+            child: Text(
+              properties.horizontalDirectionDescription,
+            ),
           ),
+          width: length,
+        ),
+        left: Container(
           height: length,
+          margin: const EdgeInsets.only(right: 16.0, left: 8.0),
+          child: BidirectionalVerticalArrowWrapper(
+            child: Text(
+              properties.verticalDirectionDescription,
+            ),
+            height: length,
+          ),
+        ),
+        right: Container(
+          height: length,
+          margin: const EdgeInsets.only(left: 8.0, right: 8.0),
+          child: BidirectionalVerticalArrowWrapper(
+            child: Text(
+              properties.verticalDirectionDescription,
+            ),
+            height: length,
+          ),
+        ),
+        bottom: Container(
+          margin: const EdgeInsets.only(top: 16.0),
+          child: BidirectionalHorizontalArrowWrapper(
+            child: Text(
+              properties.horizontalDirectionDescription,
+            ),
+          ),
+          width: length,
         ),
       ),
     );
@@ -276,23 +307,22 @@ class BidirectionalVerticalArrowWrapper extends StatelessWidget {
     @required this.child,
     this.height,
     this.arrowColor = Colors.white,
-    this.arrowHeadSize = 15.0,
+    this.arrowHeadSize = 16.0,
     this.arrowStrokeWidth = 2.0,
   })  : assert(child != null),
         super(key: key);
 
-  final double height;
   final Color arrowColor;
   final double arrowHeadSize;
   final double arrowStrokeWidth;
   final Widget child;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     final widget = Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
           child: ArrowWidget(
@@ -302,7 +332,10 @@ class BidirectionalVerticalArrowWrapper extends StatelessWidget {
             type: ArrowType.up,
           ),
         ),
-        child,
+        Container(
+          child: child,
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+        ),
         Expanded(
           child: ArrowWidget(
             color: arrowColor,
@@ -322,10 +355,10 @@ class BidirectionalVerticalArrowWrapper extends StatelessWidget {
 class BidirectionalHorizontalArrowWrapper extends StatelessWidget {
   const BidirectionalHorizontalArrowWrapper({
     Key key,
+    this.arrowColor = Colors.white,
+    this.arrowHeadSize = 16.0,
+    this.arrowStrokeWidth = 2.0,
     @required this.child,
-    this.arrowColor,
-    this.arrowHeadSize,
-    this.arrowStrokeWidth,
   })  : assert(child != null),
         super(key: key);
 
@@ -337,7 +370,9 @@ class BidirectionalHorizontalArrowWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
         Expanded(
           child: ArrowWidget(
@@ -347,7 +382,10 @@ class BidirectionalHorizontalArrowWrapper extends StatelessWidget {
             type: ArrowType.left,
           ),
         ),
-        child,
+        Container(
+          child: child,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0),
+        ),
         Expanded(
           child: ArrowWidget(
             color: arrowColor,
@@ -388,7 +426,7 @@ class GridAddOns extends StatelessWidget {
     } else if (left == null && right != null) {
       return CrossAxisAlignment.start;
     } else if (left != null && right == null) {
-      return CrossAxisAlignment.center;
+      return CrossAxisAlignment.end;
     } else {
       return CrossAxisAlignment.start;
     }
@@ -396,21 +434,20 @@ class GridAddOns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(crossAxisAlignment);
     return Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: crossAxisAlignment,
         children: <Widget>[
           if (top != null) top,
-          Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                if (left != null) left,
-                Expanded(child: child),
-                if (right != null) right,
-              ],
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (left != null) left,
+              Flexible(child: child),
+              if (right != null) right,
+            ],
           ),
           if (bottom != null) bottom,
         ]);
@@ -486,6 +523,8 @@ abstract class _ArrowPaintStrategy {
         return _right;
       case ArrowType.down:
         return _down;
+      default:
+        return _up;
     }
   }
 }
@@ -549,8 +588,12 @@ class _RightwardsArrowPaintStrategy implements _ArrowPaintStrategy {
 }
 
 class _ArrowPainter extends CustomPainter {
-  _ArrowPainter(
-      {this.arrowHeadSize, this.strokeWidth, this.color, this.strategy});
+  _ArrowPainter({
+    this.arrowHeadSize = 15.0,
+    this.strokeWidth = 2.0,
+    this.color = Colors.white,
+    this.strategy,
+  });
 
   final double arrowHeadSize;
   final double strokeWidth;
@@ -558,7 +601,7 @@ class _ArrowPainter extends CustomPainter {
   final _ArrowPaintStrategy strategy;
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 
   @override
   void paint(Canvas canvas, Size size) {
