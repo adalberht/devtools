@@ -65,14 +65,14 @@ String crossAxisAssetImageUrl(CrossAxisAlignment alignment) {
 /// Variables:
 /// - rs_i: render size for element index i
 /// - s_i: real size for element at index i (sizes[i])
-/// - ss: [smallestSize] (the smallest element in the array [sizes])
-/// - ls: [largestSize] (the largest element in the array [sizes])
-/// - srs: [smallestRenderSize] (render size for [smallestSize])
-/// - lrs: [largestRenderSize] (render size for [largestSize])
+/// - ss: the smallest element in the array [sizes]
+/// - ls: the largest element in the array [sizes]
+/// - srs: [smallestRenderSize] (render size for smallest element)
+/// - lrs: [largestRenderSize] (render size for largest element)
 /// Explanation:
 /// - The computation formula for transforming size to renderSize is based on these two things:
-///   - [smallestSize] will be rendered to [smallestRenderSize]
-///   - [largestSize] will be rendered to [largestRenderSize]
+///   - smallest element will be rendered to [smallestRenderSize]
+///   - largest element will be rendered to [largestRenderSize]
 ///   - any other size will be scaled accordingly
 /// - The formula above is derived from:
 ///    (rs_i - srs) / (lrs - srs) = (s_i - ss) / (s - ss)
@@ -88,16 +88,14 @@ String crossAxisAssetImageUrl(CrossAxisAlignment alignment) {
 ///
 List<double> computeRenderSizes({
   @required Iterable<double> sizes,
-  @required double smallestSize,
-  @required double largestSize,
   @required double smallestRenderSize,
   @required double largestRenderSize,
   @required double maxSizeAvailable,
   bool forceToOccupyMaxSizeAvailable = false,
 }) {
   /// Assign from parameters and abbreviate variable names for similarity to formula
-  final ss = smallestSize, srs = smallestRenderSize;
-  final ls = largestSize;
+  final ss = minimum(sizes), srs = smallestRenderSize;
+  final ls = maximum(sizes);
   double lrs = largestRenderSize;
   final msa = maxSizeAvailable;
   final n = sizes.length;
@@ -130,6 +128,12 @@ String mainAxisAssetImageUrl(MainAxisAlignment alignment) {
 double sum(Iterable<double> numbers) =>
     numbers.fold(0, (sum, cur) => sum + cur);
 
+double minimum(Iterable<double> numbers) =>
+    numbers.fold(double.infinity, (minimum, cur) => min(minimum, cur));
+
+double maximum(Iterable<double> numbers) =>
+    numbers.fold(-double.infinity, (minimum, cur) => max(minimum, cur));
+
 class StoryOfYourFlexWidget extends StatefulWidget {
   const StoryOfYourFlexWidget(
     this.properties, {
@@ -160,12 +164,12 @@ class _StoryOfYourFlexWidgetState extends State<StoryOfYourFlexWidget> {
   bool get isColumn => !isRow;
 
   Color get horizontalColor =>
-      properties.isHorizontalMainAxis ? mainAxisColor : crossAxisColor;
+      properties.isMainAxisHorizontal ? mainAxisColor : crossAxisColor;
 
   Color get verticalColor =>
-      properties.isVerticalMainAxis ? mainAxisColor : crossAxisColor;
+      properties.isMainAxisVertical ? mainAxisColor : crossAxisColor;
 
-  String get flexType => properties.type.toString();
+  String get flexType => properties.type;
 
   void _update() {
     mainAxisAlignment = properties.mainAxisAlignment;
@@ -263,30 +267,14 @@ class _StoryOfYourFlexWidgetState extends State<StoryOfYourFlexWidget> {
           final maxHeight = constraints.maxHeight;
 
           // TODO(albertusangga): Remove ternary checking after visualizing empty space
-          final largestRenderWidth = isColumn
-              ? maxWidth
-              : max(
-                  min(
-                    maxWidth * properties.largestWidthChildFraction,
-                    defaultMaxRenderWidth,
-                  ),
-                  minRenderWidth,
-                );
+          final largestRenderWidth =
+              isColumn ? maxWidth : defaultMaxRenderWidth;
           // TODO(albertusangga): Remove ternary checking after visualizing empty space
-          final largestRenderHeight = isRow
-              ? maxHeight
-              : max(
-                  min(
-                    maxHeight * properties.largestHeightChildFraction,
-                    defaultMaxRenderHeight,
-                  ),
-                  minRenderHeight,
-                );
+          final largestRenderHeight =
+              isRow ? maxHeight : defaultMaxRenderHeight;
 
           final renderHeights = computeRenderSizes(
             sizes: properties.childrenHeight,
-            smallestSize: properties.smallestHeightChild.height,
-            largestSize: properties.largestHeightChild.height,
             smallestRenderSize: minRenderHeight,
             largestRenderSize: largestRenderHeight,
             maxSizeAvailable: maxHeight,
@@ -295,8 +283,6 @@ class _StoryOfYourFlexWidgetState extends State<StoryOfYourFlexWidget> {
 
           final renderWidths = computeRenderSizes(
             sizes: properties.childrenWidth,
-            smallestSize: properties.smallestWidthChild.width,
-            largestSize: properties.largestWidthChild.width,
             smallestRenderSize: minRenderWidth,
             largestRenderSize: largestRenderWidth,
             maxSizeAvailable: maxWidth,
@@ -756,9 +742,10 @@ class EmptySpaceVisualizerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        width: renderWidth,
-        height: renderHeight,
-        child: Stack(children: <Widget>[
+      width: renderWidth,
+      height: renderHeight,
+      child: Stack(
+        children: <Widget>[
           Positioned.fill(
             child: Image.asset(
               assetName,
@@ -803,6 +790,8 @@ class EmptySpaceVisualizerWidget extends StatelessWidget {
               ),
             ),
           ),
-        ]));
+        ],
+      ),
+    );
   }
 }

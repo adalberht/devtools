@@ -312,15 +312,6 @@ void main() {
           maxHeight: 56.0,
         ),
       );
-      expect(layoutProperties.smallestWidthChild.size.width, 56.0);
-      expect(layoutProperties.smallestWidthChildFraction, 56.0 / 432.0);
-      expect(layoutProperties.largestWidthChild.size.width, 320.0);
-      expect(layoutProperties.largestWidthChildFraction, 320.0 / 432.0);
-
-      expect(layoutProperties.smallestHeightChild.size.height, 25.0);
-      expect(layoutProperties.smallestHeightChildFraction, 25.0 / 56.0);
-      expect(layoutProperties.largestHeightChild.size.height, 56.0);
-      expect(layoutProperties.largestHeightChildFraction, 56.0 / 56.0);
     });
 
     group('describeWidthConstraints and describeHeightConstraints', () {

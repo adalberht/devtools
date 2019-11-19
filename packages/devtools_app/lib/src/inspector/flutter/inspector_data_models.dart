@@ -1,6 +1,8 @@
 // Copyright 2019 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+import 'dart:math' show max;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -8,6 +10,7 @@ import 'package:flutter/widgets.dart';
 import '../../utils.dart';
 import '../diagnostics_node.dart';
 import '../enum_utils.dart';
+import 'story_of_your_layout/flex.dart';
 
 const Type boxConstraintsType = BoxConstraints;
 
@@ -24,18 +27,7 @@ class LayoutProperties {
             : node?.childrenNow
                 ?.map((child) =>
                     LayoutProperties(child, copyLevel: copyLevel - 1))
-                ?.toList(growable: false) {
-    if (node != null && children != null && children.isNotEmpty) {
-      _smallestHeightChild = children.reduce((value, element) =>
-          value.size.height < element.size.height ? value : element);
-      _smallestWidthChild = children.reduce((value, element) =>
-          value.size.width < element.size.width ? value : element);
-      _largestHeightChild = children.reduce((value, element) =>
-          value.size.height > element.size.height ? value : element);
-      _largestWidthChild = children.reduce((value, element) =>
-          value.size.width > element.size.width ? value : element);
-    }
-  }
+                ?.toList(growable: false);
 
   final List<LayoutProperties> children;
   final BoxConstraints constraints;
@@ -44,39 +36,19 @@ class LayoutProperties {
   final bool isFlex;
   final Size size;
 
-  LayoutProperties _smallestHeightChild;
-  LayoutProperties _smallestWidthChild;
-  LayoutProperties _largestHeightChild;
-  LayoutProperties _largestWidthChild;
-
   int get totalChildren => children?.length ?? 0;
 
   bool get hasChildren => children?.isNotEmpty ?? false;
-
-  LayoutProperties get smallestWidthChild => _smallestWidthChild;
-
-  LayoutProperties get smallestHeightChild => _smallestHeightChild;
-
-  LayoutProperties get largestWidthChild => _largestWidthChild;
-
-  LayoutProperties get largestHeightChild => _largestHeightChild;
-
-  double get smallestWidthChildFraction => _smallestWidthChild.width / width;
-
-  double get smallestHeightChildFraction =>
-      _smallestHeightChild.height / height;
-
-  double get largestWidthChildFraction => _largestWidthChild.width / width;
-
-  double get largestHeightChildFraction => _largestHeightChild.height / height;
 
   double get width => size?.width;
 
   double get height => size?.height;
 
-  Iterable<double> get childrenWidth => children?.map((child) => child.width);
+  List<double> get childrenWidth =>
+      children?.map((child) => child.width)?.toList();
 
-  Iterable<double> get childrenHeight => children?.map((child) => child.height);
+  List<double> get childrenHeight =>
+      children?.map((child) => child.height)?.toList();
 
   String describeWidthConstraints() => constraints.hasBoundedWidth
       ? describeAxis(constraints.minWidth, constraints.maxWidth, 'w')
@@ -125,7 +97,32 @@ class FlexLayoutProperties extends LayoutProperties {
     this.textDirection,
     this.verticalDirection,
     this.textBaseline,
-  }) : super(node);
+  }) : super(node) {
+    computeSpaces();
+  }
+
+  void computeSpaces() {
+    if (children.isEmpty) {
+      spaceBeforeChildren = spaceAfterChildren = spaceBetweenChildren = null;
+    }
+    final freeSpace = mainAxisDimension() -
+        sum(children.map((child) => mainAxisDimension(child)));
+    if (mainAxisAlignment == MainAxisAlignment.start) {
+      spaceBeforeChildren = freeSpace;
+    } else if (mainAxisAlignment == MainAxisAlignment.end) {
+      spaceAfterChildren = freeSpace;
+    } else if (mainAxisAlignment == MainAxisAlignment.center) {
+      spaceBeforeChildren = spaceAfterChildren = freeSpace / 2.0;
+    } else if (mainAxisAlignment == MainAxisAlignment.spaceBetween) {
+      spaceBetweenChildren = freeSpace / max(1, children.length - 1);
+    } else if (mainAxisAlignment == MainAxisAlignment.spaceAround) {
+      spaceBetweenChildren = freeSpace / children.length;
+      spaceBeforeChildren = spaceAfterChildren = spaceBetweenChildren / 2.0;
+    } else if (mainAxisAlignment == MainAxisAlignment.spaceEvenly) {
+      spaceAfterChildren = spaceBeforeChildren =
+          spaceBetweenChildren = freeSpace / (children.length + 1);
+    }
+  }
 
   final Axis direction;
   final MainAxisAlignment mainAxisAlignment;
@@ -134,6 +131,10 @@ class FlexLayoutProperties extends LayoutProperties {
   final TextDirection textDirection;
   final VerticalDirection verticalDirection;
   final TextBaseline textBaseline;
+
+  double spaceBeforeChildren;
+  double spaceBetweenChildren;
+  double spaceAfterChildren;
 
   int _totalFlex;
 
@@ -161,9 +162,9 @@ class FlexLayoutProperties extends LayoutProperties {
     );
   }
 
-  bool get isHorizontalMainAxis => direction == Axis.horizontal;
+  bool get isMainAxisHorizontal => direction == Axis.horizontal;
 
-  bool get isVerticalMainAxis => direction == Axis.vertical;
+  bool get isMainAxisVertical => direction == Axis.vertical;
 
   String get horizontalDirectionDescription =>
       direction == Axis.horizontal ? 'Main Axis' : 'Cross Axis';
@@ -171,8 +172,7 @@ class FlexLayoutProperties extends LayoutProperties {
   String get verticalDirectionDescription =>
       direction == Axis.vertical ? 'Main Axis' : 'Cross Axis';
 
-  // TODO(albertusangga): Remove this getter since type is not that useful
-  Type get type => direction == Axis.horizontal ? Row : Column;
+  String get type => direction == Axis.horizontal ? 'Row' : 'Column';
 
   int get totalFlex {
     if (children?.isEmpty ?? true) return 0;
@@ -184,6 +184,18 @@ class FlexLayoutProperties extends LayoutProperties {
 
   Axis get crossDirection =>
       direction == Axis.horizontal ? Axis.vertical : Axis.horizontal;
+
+  double mainAxisDimension([LayoutProperties properties]) {
+    properties ??= this;
+    direction == Axis.horizontal ? properties.width : properties.height;
+  }
+
+  double crossAxisDimension([LayoutProperties properties]) {
+    properties ??= this;
+    direction == Axis.vertical ? properties.width : properties.height;
+  }
+
+  List<double> get childrenAndSpacesWidths {}
 
   static final _directionUtils = EnumUtils<Axis>(Axis.values);
   static final _mainAxisAlignmentUtils =
